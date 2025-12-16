@@ -67,3 +67,49 @@ simulate_household <- function(n, qh, qc, max_gen = 10) {
 
 # We use this function in ABC Algorithm to see if a specific pair of (qc,qh) produces "Total Infected" counts that match the real history. 
 # If the simulation matches the data, the parameters are accepted as plausible.
+
+
+#-------------------------------------------------------------------------------
+## ABC Algorithm
+# Prior Distribution
+# Assume we know nothing else about qc and qh, so every value between 0 and 1 is equally likely (Uniform)
+# Uniform(0,1) for both parameters
+# The first number represents qc: Community escape probability
+# The second number represents qh: Household escape probability
+prior_distribution <- function() {
+  return(runif(2, 0, 1))
+}
+
+# generate one valid sample (one accepted pair of qc,qh) from the posterior distribution
+generate_abc_sample <- function(observed_data_vector,
+                                summary_statistic_fn,
+                                prior_distribution_fn,
+                                data_generating_fn,
+                                epsilon) {
+  # keep guessing parameters and simulating data until it finds a result that is "good enough"
+  # makes a random guess for the parameters based on the Prior Distribution (it picks two random numbers between 0 and 1)
+  # Goal: To generate one valid particle (a pair of parameters qc,qh) that fits the data
+  while(TRUE) {
+    # Sample Parameters
+    theta <- prior_distribution_fn() # Returns c(qc, qh)
+    qc_val <- theta[1] # The specific numerical value for qc
+    qh_val <- theta[2] # The specific numerical value for qh
+    # Simulate Data: use the guessed parameters to create a fake epidemic history
+    y <- data_generating_fn(qc_val, qh_val)
+    # Calculate stats: take the simulated data y and formats it to match the format of the real data 
+    stat_sim <- summary_statistic_fn(y)
+    stat_obs <- observed_data_vector
+    # Compute Distance: the Euclidean Distance between the real data and the fake data
+    # (Simulated−Real)^2: Square the differences to make negatives positive
+    # Add them all up, and take the square root
+    dist <- sqrt(sum((stat_sim - stat_obs)^2))
+    # High Distance: The simulation looks nothing like reality. The guess was bad.
+    # Low Distance: The simulation looks very similar to reality. The guess was good.
+    # If the distance is smaller than the allowed error (epsilon), we accepct the parameters and return them
+    # If the distance is larger, goes back to while(TRUE), and tries again with a new random guess
+    if(dist < epsilon) {
+      # Return valid parameter set
+      return(theta) 
+    }
+  }
+}
