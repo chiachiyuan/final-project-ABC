@@ -157,4 +157,57 @@ abc_analysis <- function(target_matrix, n_samples=1000, epsilon=20) {
   return(df)
 }
 
+#-------------------------------------------------------------------------------
+## Execution
+# Figure 3a: Tecumseh
+# Data is larger, so Distance will be larger.
+# Tecumseh 1977-78
+hh_sizes_global <- get_household_sizes(counts_1977) #counts exactly how many households of size 1, 2, 3...
+posterior_1977 <- abc_analysis(counts_1977, n_samples=1000, epsilon=20)
+
+# Tecumseh 1980-81
+hh_sizes_global <- get_household_sizes(counts_1980)
+posterior_1980 <- abc_analysis(counts_1980, n_samples=1000, epsilon=20)
+
+# Figure 3c: Seattle
+# Data is smaller, so Distance will be smaller.
+# Seattle 1975-76
+hh_sizes_global <- get_household_sizes(counts_1975)
+posterior_1975 <- abc_analysis(counts_1975, n_samples=1000, epsilon=10)
+
+# Seattle 1978-79
+hh_sizes_global <- get_household_sizes(counts_1978)
+posterior_1978 <- abc_analysis(counts_1978, n_samples=1000, epsilon=10)
+
+#-------------------------------------------------------------------------------
+## Plotting
+# X-Axis (qh):
+# Left (Low qh): High transmission in the household (hard to escape)
+# Right (High qh): Low transmission in the household (easy to escape)
+# Y-Axis (qc)
+# Bottom (Low qc): High transmission from the community
+# Top (High qc): Low transmission from the community
+
+par(mfrow=c(1,2))
+# Plot 1: Tecumseh
+plot(posterior_1977$qh, posterior_1977$qc, 
+     xlim=c(0,1), ylim=c(0,1),
+     xlab="Household escape prob (qh)", ylab="Community escape prob (qc)",
+     main="Tecumseh (Fig 3a)",
+     pch=16, col=rgb(0,0,1,0.5)) # Blue
+points(posterior_1980$qh, posterior_1980$qc, 
+       pch=16, col=rgb(1,0,0,0.5)) # Red
+legend("bottomleft", legend=c("1977-78", "1980-81"), 
+       col=c("blue", "red"), pch=16, bty="n")
+
+# Plot 2: Seattle
+plot(posterior_1975$qh, posterior_1975$qc, 
+     xlim=c(0,1), ylim=c(0,1), # Force the axes to go from 0 to 1
+     xlab="Household escape prob (qh)", ylab="Community escape prob (qc)",
+     main="Seattle (Fig 3c)",
+     pch=16, col=rgb(0,0,1,0.5)) # Blue
+points(posterior_1978$qh, posterior_1978$qc, 
+       pch=16, col=rgb(1,0,0,0.5)) # Red
+legend("bottomleft", legend=c("1975-76", "1978-79"), 
+       col=c("blue", "red"), pch=16, bty="n")
 
